@@ -47,10 +47,13 @@ def is_column_winning(pos):
 
 def is_diagonal_winning(pos):
     state = board[pos[0]][pos[1]]
-    for i in range(3):
-        if state != board[i][i]:
-            return False
-    return True
+    if pos[0] == pos[1]:  # головна діагональ
+        if all(board[i][i] == state for i in range(3)):
+            return True
+    if pos[0] + pos[1] == 2:  # побічна діагональ
+        if all(board[i][2 - i] == state for i in range(3)):
+            return True
+    return False
 
 def check_win(pos):
     return is_row_winning(pos) or is_column_winning(pos) or is_diagonal_winning(pos)
@@ -78,34 +81,36 @@ def play_again():
 def main():
     players = ["Player 1", "Player 2"]
     states = [CellState.X, CellState.O]
-    player = 0
+
     while True:
-        print_board(board)
-        pos = input(players[player] + " move: ").strip().upper()
-        state = states[player]
+        clear_board(board)
+        player = 0
 
-        if pos_is_correct(pos):
-            pos = make_normal_pos(pos)
-            add_el(pos, state)
-            if check_win(pos):
-                print(players[player] + " wins!")
-                if play_again():
-                    main()
-                else:
-                    return 0
+        while True:
+            print_board(board)
+            pos = input(players[player] + " move: ").strip().upper()
+            state = states[player]
 
-            if is_draw(board):
-                print("Draw!")
-                if play_again():
-                    main()
-                else:
-                    return 0
-        else:
-            print("Invalid move!")
-            continue
+            if pos_is_correct(pos):
+                pos = make_normal_pos(pos)
+                add_el(pos, state)
 
-        player = 1 - player
+                if check_win(pos):
+                    print_board(board)
+                    print(players[player] + " wins!")
+                    break
 
-    return 0
+                if is_draw(board):
+                    print_board(board)
+                    print("Draw!")
+                    break
+
+                player = 1 - player
+
+            else:
+                print("Invalid move!")
+
+        if not play_again():
+            break
 
 main()
