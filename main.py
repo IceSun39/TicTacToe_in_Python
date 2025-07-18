@@ -150,6 +150,7 @@ def game_with_bot(player_state, bot_state):
                 is_player_move = not is_player_move
 
             else:
+                pos = make_normal_pos(pos)
                 print("Invalid move!")
 
         else:
@@ -203,7 +204,7 @@ def main():
     else:
         while True:
             clear_board(board)
-            player_state = input("Choose state: X or O ")
+            player_state = input("Choose state: X or O ").strip().upper()
 
             if player_state == "X":
                 player_state = CellState.X
