@@ -1,4 +1,5 @@
 from enum import Enum
+import random
 
 class CellState(Enum):
     EMPTY = " "
@@ -59,11 +60,7 @@ def check_win(pos):
     return is_row_winning(pos) or is_column_winning(pos) or is_diagonal_winning(pos)
 
 def is_draw(board):
-    for i in range(3):
-        for j in range(3):
-            if board[i][j] == CellState.EMPTY:
-                return False
-    return True
+    return all(cell != CellState.EMPTY for row in board for cell in row)
 
 def clear_board(board):
     for i in range(3):
