@@ -75,39 +75,96 @@ def play_again():
     else:
         return False
 
-def main():
-    players = ["Player 1", "Player 2"]
-    states = [CellState.X, CellState.O]
+def get_bot_move(bot_state, player_state):
+    for i in range(3):
+        for j in range(3):
+            if board[i][j].is_empty():
+                board[i][j] = bot_state
+                if check_win((i, j)):
+                    board[i][j] = CellState.EMPTY
+                    return (i, j)
+                board[i][j] = CellState.EMPTY
 
+    for i in range(3):
+        for j in range(3):
+            if board[i][j].is_empty():
+                board[i][j] = player_state
+                if check_win((i, j)):
+                    board[i][j] = CellState.EMPTY
+                    return (i, j)
+                board[i][j] = CellState.EMPTY
+
+    if board[1][1].is_empty():
+        return (1, 1)
+
+    corners = [(0,0), (2,0), (0,2), (2,2)]
+    random.shuffle(corners)
+    for i, j in corners:
+        if board[i][j].is_empty():
+            return (i, j)
+
+    available = [(i, j) for i in range(3) for j in range(3) if board[i][j].is_empty()]
+    return random.choice(available)
+
+def game_with_player(players, states, player):
     while True:
-        clear_board(board)
-        player = 0
+        print_board(board)
+        pos = input(players[player] + " move: ").strip().upper()
+        state = states[player]
 
+        if pos_is_correct(pos):
+            pos = make_normal_pos(pos)
+            add_el(pos, state)
+
+            if check_win(pos):
+                print_board(board)
+                print(players[player] + " wins!")
+                break
+
+            if is_draw(board):
+                print_board(board)
+                print("Draw!")
+                break
+
+            player = 1 - player
+
+        else:
+            print("Invalid move!")
+
+def game_with_bot(player_state, bot_state):
+
+
+
+def main():
+    mode = int(input("Choose mode: 1 - PvP, 2 - PvBot "))
+    bot_enable = (mode == 2)
+
+    if not bot_enable:
+        players = ["Player 1", "Player 2"]
+        states = [CellState.X, CellState.O]
         while True:
-            print_board(board)
-            pos = input(players[player] + " move: ").strip().upper()
-            state = states[player]
+            clear_board(board)
+            player = 0
 
-            if pos_is_correct(pos):
-                pos = make_normal_pos(pos)
-                add_el(pos, state)
+            game_with_player(players, states, player)
 
-                if check_win(pos):
-                    print_board(board)
-                    print(players[player] + " wins!")
-                    break
+            if not play_again():
+                break
+    else:
+        while True:
+            player_state = input("Choose state: X or O")
 
-                if is_draw(board):
-                    print_board(board)
-                    print("Draw!")
-                    break
-
-                player = 1 - player
-
+            if player_state == "X":
+                player_state = CellState.X
+                bot_state = CellState.O
+                break
+            elif player_state == "O":
+                player_state = CellState.O
+                bot_state = CellState.X
+                break
             else:
-                print("Invalid move!")
+                print("Invalid state!")
 
-        if not play_again():
-            break
+
 
 main()
