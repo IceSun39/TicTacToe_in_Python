@@ -1,5 +1,7 @@
 from enum import Enum
 import random
+from time import sleep
+
 
 class CellState(Enum):
     EMPTY = " "
@@ -132,12 +134,60 @@ def game_with_player(players, states, player):
             print("Invalid move!")
 
 def game_with_bot(player_state, bot_state):
+    is_player_move = True
+    if player_state == CellState.O:
+        is_player_move = False
 
+    while True:
+
+        if is_player_move:
+            print_board(board)
+            pos = input("Make a move: ").strip().upper()
+
+            if pos_is_correct(pos):
+                pos = make_normal_pos(pos)
+                add_el(pos, player_state)
+                is_player_move = not is_player_move
+
+            else:
+                print("Invalid move!")
+
+        else:
+            print_board(board)
+            print("Bot is thinking...")
+            sleep(3)
+            pos = get_bot_move(bot_state, player_state)
+            add_el(pos, bot_state)
+            is_player_move = not is_player_move
+
+        if check_win(pos) and is_player_move:
+            print_board(board)
+            print("Bot wins!")
+            break
+
+        if check_win(pos) and not is_player_move:
+            print_board(board)
+            print("Player wins!")
+            break
+
+        if is_draw(board):
+            print_board(board)
+            print("Draw!")
+            break
 
 
 def main():
-    mode = int(input("Choose mode: 1 - PvP, 2 - PvBot "))
-    bot_enable = (mode == 2)
+    bot_enable = False
+    while True:
+        mode = int(input("Choose mode: 1 - PvP, 2 - PvBot "))
+        if mode == 1:
+            bot_enable = False
+            break
+        elif mode == 2:
+            bot_enable = True
+            break
+        else:
+            print("Invalid mode!")
 
     if not bot_enable:
         players = ["Player 1", "Player 2"]
@@ -152,16 +202,21 @@ def main():
                 break
     else:
         while True:
-            player_state = input("Choose state: X or O")
+            clear_board(board)
+            player_state = input("Choose state: X or O ")
 
             if player_state == "X":
                 player_state = CellState.X
                 bot_state = CellState.O
-                break
+                game_with_bot(player_state, bot_state)
+                if not play_again():
+                    break
             elif player_state == "O":
                 player_state = CellState.O
                 bot_state = CellState.X
-                break
+                game_with_bot(player_state, bot_state)
+                if not play_again():
+                    break
             else:
                 print("Invalid state!")
 
