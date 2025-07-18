@@ -1,8 +1,30 @@
-# Default ignored files
+# Python
+__pycache__/
+*.py[cod]
+*.egg
+*.egg-info/
+dist/
+build/
+.env
+.venv
+env/
+venv/
+*.sqlite3
+*.log
+
+# PyCharm / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
 /shelf/
 /workspace.xml
-# Editor-based HTTP Client requests
 /httpRequests/
-# Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
+
+# MacOS
+.DS_Store
+
+# VS Code (якщо хтось буде відкривати в ньому)
+.vscode/
