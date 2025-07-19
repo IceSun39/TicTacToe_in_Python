@@ -20,8 +20,9 @@ class TicTacToeGUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Хрестики-нулики / Tic-Tac-Toe")
-        self.root.geometry("400x500")
-        self.root.resizable(False, False)
+        self.root.geometry("600x700")
+        self.root.minsize(500, 600)
+        self.root.resizable(True, True)
         
         # Ігрове поле 3x3 заповнене порожніми клітинками
         self.board = [[CellState.EMPTY, CellState.EMPTY, CellState.EMPTY] for _ in range(3)]
@@ -38,7 +39,8 @@ class TicTacToeGUI:
     def setup_ui(self):
         # Заголовок
         title_label = tk.Label(self.root, text="Хрестики-нулики", 
-                              font=("Arial", 20, "bold"), bg="#2c3e50", fg="white")
+                              font=("Arial", 24, "bold"), bg="#2c3e50", fg="white", 
+                              pady=10)
         title_label.pack(fill=tk.X, pady=5)
         
         # Фрейм для вибору режиму
@@ -46,7 +48,7 @@ class TicTacToeGUI:
         mode_frame.pack(pady=10)
         
         tk.Label(mode_frame, text="Оберіть режим гри:", 
-                font=("Arial", 12), bg="#ecf0f1").pack(pady=5)
+                font=("Arial", 14), bg="#ecf0f1").pack(pady=5)
         
         # Кнопки вибору режиму
         btn_frame = tk.Frame(mode_frame, bg="#ecf0f1")
@@ -54,19 +56,20 @@ class TicTacToeGUI:
         
         self.pvp_btn = tk.Button(btn_frame, text="Гравець vs Гравець", 
                                command=self.start_pvp_game,
-                               bg="#3498db", fg="white", font=("Arial", 10),
-                               width=15, height=2)
-        self.pvp_btn.pack(side=tk.LEFT, padx=5)
+                               bg="#3498db", fg="white", font=("Arial", 12),
+                               width=18, height=2)
+        self.pvp_btn.pack(side=tk.LEFT, padx=10)
         
         self.bot_btn = tk.Button(btn_frame, text="Гравець vs Бот", 
                                command=self.start_bot_game,
-                               bg="#e74c3c", fg="white", font=("Arial", 10),
-                               width=15, height=2)
-        self.bot_btn.pack(side=tk.LEFT, padx=5)
+                               bg="#e74c3c", fg="white", font=("Arial", 12),
+                               width=18, height=2)
+        self.bot_btn.pack(side=tk.LEFT, padx=10)
         
         # Інформаційна панель
         self.info_label = tk.Label(self.root, text="Оберіть режим гри", 
-                                  font=("Arial", 12), bg="#95a5a6", fg="white")
+                                  font=("Arial", 14, "bold"), bg="#95a5a6", fg="white",
+                                  pady=8)
         self.info_label.pack(fill=tk.X, pady=5)
         
         # Ігрове поле
@@ -78,22 +81,35 @@ class TicTacToeGUI:
             row = []
             for j in range(3):
                 btn = tk.Button(self.game_frame, text="", 
-                              font=("Arial", 24, "bold"),
-                              width=4, height=2,
+                              font=("Arial", 28, "bold"),
+                              width=6, height=3,
                               bg="#bdc3c7", fg="#2c3e50",
                               command=lambda r=i, c=j: self.on_cell_click(r, c),
                               state=tk.DISABLED)
-                btn.grid(row=i, column=j, padx=2, pady=2)
+                btn.grid(row=i, column=j, padx=3, pady=3)
                 row.append(btn)
             self.buttons.append(row)
         
+        # Фрейм для кнопок керування
+        control_frame = tk.Frame(self.root, bg="#ecf0f1")
+        control_frame.pack(pady=10)
+        
         # Кнопка нової гри
-        self.new_game_btn = tk.Button(self.root, text="Нова гра", 
+        self.new_game_btn = tk.Button(control_frame, text="Нова гра", 
                                     command=self.new_game,
                                     bg="#27ae60", fg="white", 
-                                    font=("Arial", 12, "bold"),
-                                    width=20, height=2)
-        self.new_game_btn.pack(pady=10)
+                                    font=("Arial", 13, "bold"),
+                                    width=15, height=2)
+        self.new_game_btn.pack(side=tk.LEFT, padx=8)
+        
+        # Кнопка рестарт
+        self.restart_btn = tk.Button(control_frame, text="Рестарт", 
+                                   command=self.restart_game,
+                                   bg="#f39c12", fg="white", 
+                                   font=("Arial", 13, "bold"),
+                                   width=15, height=2,
+                                   state=tk.DISABLED)
+        self.restart_btn.pack(side=tk.LEFT, padx=8)
         
         # Кнопка виходу
         exit_btn = tk.Button(self.root, text="Вихід", 
@@ -108,6 +124,7 @@ class TicTacToeGUI:
         self.current_player = CellState.X
         self.game_active = True
         self.enable_board()
+        self.restart_btn.config(state=tk.NORMAL)
         self.update_info("Гра 'Гравець vs Гравець' - Хід гравця X")
         
     def start_bot_game(self):
@@ -131,6 +148,7 @@ class TicTacToeGUI:
             
         self.game_active = True
         self.enable_board()
+        self.restart_btn.config(state=tk.NORMAL)
         
         # Якщо бот ходить першим
         if self.current_player == self.bot_state:
@@ -219,7 +237,35 @@ class TicTacToeGUI:
         # Скинути стан гри
         self.game_active = False
         self.current_player = CellState.X
+        self.game_mode = None
+        self.restart_btn.config(state=tk.DISABLED)
         self.update_info("Оберіть режим гри")
+        
+    def restart_game(self):
+        if not self.game_mode:
+            return
+            
+        # Очистити поле
+        self.board = [[CellState.EMPTY, CellState.EMPTY, CellState.EMPTY] for _ in range(3)]
+        
+        # Очистити кнопки
+        for i in range(3):
+            for j in range(3):
+                self.buttons[i][j].config(text="", bg="#bdc3c7", state=tk.NORMAL)
+                
+        # Перезапустити гру в тому ж режимі
+        if self.game_mode == "pvp":
+            self.current_player = CellState.X
+            self.game_active = True
+            self.update_info("Гра 'Гравець vs Гравець' - Хід гравця X")
+        elif self.game_mode == "bot":
+            self.current_player = CellState.X
+            self.game_active = True
+            if self.player_state == CellState.X:
+                self.update_info("Гра проти бота - Ваш хід (X)")
+            else:
+                self.update_info("Гра проти бота - Хід бота (X)")
+                self.root.after(1000, self.make_bot_move)
         
     # Логіка гри (з оригінального коду)
     def check_win(self, pos):
