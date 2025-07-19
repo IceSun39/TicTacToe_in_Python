@@ -1,226 +1,204 @@
-from enum import Enum
+import tkinter as tk
 import random
-from time import sleep
+from enum import Enum
 
 
+# Стани клітинки гри
 class CellState(Enum):
     EMPTY = " "
     X = "X"
     O = "O"
 
-    def is_empty(self):
-        return self == CellState.EMPTY
 
-board = [[CellState.EMPTY, CellState.EMPTY, CellState.EMPTY] for _ in range(3)]
+import tkinter as tk
+import random
+from enum import Enum
 
-# Координати
-columns = ['1', '2', '3']
-rows = {'A': 0, 'B': 1, 'C': 2}
 
-def print_board(board):
-    print("  " + "   ".join(columns))
-    for key, row in zip(rows.keys(), board):
-        print(key, " | ".join(cell.value for cell in row))
+# Стани клітинки гри
+class CellState(Enum):
+    EMPTY = " "
+    X = "X"
+    O = "O"
 
-def pos_is_correct(pos):
-    if len(pos) == 2 and pos[0] in list(rows.keys()) and pos[1] in columns and board[rows[pos[0]]][int(pos[1]) - 1] == CellState.EMPTY:
-        return True
-    else:
-        return False
 
-def add_el(pos, state):
-    board[pos[0]][pos[1]] = state
+# GUI для гри Тік-Так-Тое
+class TicTacToeGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Tic Tac Toe")
+        self.root.geometry("400x500")
+        self.root.minsize(400, 500)
 
-def make_normal_pos(pos):
-    return rows[pos[0]], int(pos[1]) - 1
+        # Ігрові дані
+        self.board = [[CellState.EMPTY] * 3 for _ in range(3)]
+        self.buttons = [[None] * 3 for _ in range(3)]
+        self.current_player = CellState.X
+        self.game_mode = tk.StringVar(value="2 Players")
+        self.scores = {CellState.X: 0, CellState.O: 0, 'Draw': 0}
+        self.is_game_over = False
 
-def is_row_winning(pos):
-    state = board[pos[0]][pos[1]]
-    for i in range(3):
-        if state != board[pos[0]][i]:
+        # Основний контейнер
+        self.main_frame = tk.Frame(self.root)
+        self.main_frame.pack(expand=True, fill=tk.BOTH)
+
+        # UI
+        self.create_mode_selector()
+        self.create_board()
+        self.create_status_label()
+        self.create_score_label()
+        self.create_control_buttons()
+
+        self.game_mode.trace_add('write', self.on_mode_change)
+        self.root.bind('<Configure>', self.on_resize)
+
+    def create_mode_selector(self):
+        frame = tk.Frame(self.main_frame)
+        frame.pack(pady=10)
+        tk.Radiobutton(frame, text="2 Players", variable=self.game_mode, value="2 Players").pack(side=tk.LEFT, padx=5)
+        tk.Radiobutton(frame, text="Vs Bot", variable=self.game_mode, value="Vs Bot").pack(side=tk.LEFT, padx=5)
+
+    def create_board(self):
+        self.board_frame = tk.Frame(self.main_frame)
+        self.board_frame.pack(expand=True, fill=tk.BOTH, padx=20, pady=10)
+        for i in range(3):
+            self.board_frame.grid_rowconfigure(i, weight=1)
+            self.board_frame.grid_columnconfigure(i, weight=1)
+            for j in range(3):
+                btn = tk.Button(self.board_frame, text="", font=("Helvetica", 40),
+                                command=lambda r=i, c=j: self.make_move(r, c))
+                btn.grid(row=i, column=j, sticky='nsew', padx=5, pady=5)
+                self.buttons[i][j] = btn
+
+    def create_status_label(self):
+        self.status_label = tk.Label(self.main_frame, text="Player X's turn", font=("Helvetica", 16))
+        self.status_label.pack(pady=5)
+
+    def create_score_label(self):
+        self.score_label = tk.Label(self.main_frame, text=self.get_score_text(), font=("Helvetica", 14))
+        self.score_label.pack(pady=5)
+
+    def create_control_buttons(self):
+        frame = tk.Frame(self.main_frame)
+        frame.pack(pady=5)
+        tk.Button(frame, text="Restart", command=self.restart_game).pack()
+
+    def get_score_text(self):
+        return f"X: {self.scores[CellState.X]}  O: {self.scores[CellState.O]}  Draws: {self.scores['Draw']}"
+
+    def on_resize(self, event):
+        if not self.buttons[0][0]: return
+        size = int(min(event.width, event.height) / 12)
+        for row in self.buttons:
+            for btn in row:
+                btn.config(font=("Helvetica", size))
+
+    def on_mode_change(self, *args):
+        self.scores = {CellState.X: 0, CellState.O: 0, 'Draw': 0}
+        self.score_label.config(text=self.get_score_text())
+        self.restart_game()
+
+    def make_move(self, r, c):
+        if self.board[r][c] != CellState.EMPTY or self.is_game_over:
+            return
+
+        self.board[r][c] = self.current_player
+        self.buttons[r][c].config(text=self.current_player.value, state=tk.DISABLED)
+
+        if self.check_win(r, c):
+            self.scores[self.current_player] += 1
+            self.status_label.config(text=f"{self.current_player.value} wins!")
+            self.score_label.config(text=self.get_score_text())
+            self.disable_buttons()
+            self.is_game_over = True
+            return
+
+        if self.check_draw():
+            self.scores['Draw'] += 1
+            self.status_label.config(text="Draw!")
+            self.score_label.config(text=self.get_score_text())
+            self.disable_buttons()
+            self.is_game_over = True
+            return
+
+        self.current_player = CellState.O if self.current_player == CellState.X else CellState.X
+        self.status_label.config(text=f"Player {self.current_player.value}'s turn")
+
+        if self.game_mode.get() == "Vs Bot" and self.current_player == CellState.O:
+            self.disable_buttons()
+            self.root.after(300, self.bot_move)
+
+    def bot_move(self):
+        move = self.find_best_move()
+        if move:
+            self.make_move(*move)
+
+        if not self.is_game_over:
+            self.enable_empty_buttons()
+
+    def enable_empty_buttons(self):
+        for i in range(3):
+            for j in range(3):
+                if self.board[i][j] == CellState.EMPTY:
+                    self.buttons[i][j].config(state=tk.NORMAL)
+
+    def find_best_move(self):
+        for sym in (CellState.O, CellState.X):
+            for i in range(3):
+                for j in range(3):
+                    if self.board[i][j] == CellState.EMPTY:
+                        self.board[i][j] = sym
+                        if self.check_win(i, j):
+                            self.board[i][j] = CellState.EMPTY
+                            return (i, j)
+                        self.board[i][j] = CellState.EMPTY
+        if self.board[1][1] == CellState.EMPTY: return (1, 1)
+        corners = [(0, 0), (0, 2), (2, 0), (2, 2)];
+        random.shuffle(corners)
+        for i, j in corners:
+            if self.board[i][j] == CellState.EMPTY: return (i, j)
+        sides = [(0, 1), (1, 0), (1, 2), (2, 1)];
+        random.shuffle(sides)
+        for i, j in sides:
+            if self.board[i][j] == CellState.EMPTY: return (i, j)
+        return None
+
+    # Перевірка виграшу
+    def check_win(self, r, c):
+        # FIX: Спочатку отримуємо символ гравця
+        s = self.board[r][c]
+
+        # FIX: Якщо клітинка порожня, перемоги бути не може.
+        # Це ключове виправлення, яке усуває баг.
+        if s == CellState.EMPTY:
             return False
-    return True
 
-def is_column_winning(pos):
-    state = board[pos[0]][pos[1]]
-    for i in range(3):
-        if state != board[i][pos[1]]:
-            return False
-    return True
+        # Решта логіки залишається такою ж
+        return any([
+            all(self.board[r][i] == s for i in range(3)),
+            all(self.board[i][c] == s for i in range(3)),
+            (r == c and all(self.board[i][i] == s for i in range(3))),
+            (r + c == 2 and all(self.board[i][2 - i] == s for i in range(3)))
+        ])
 
-def is_diagonal_winning(pos):
-    state = board[pos[0]][pos[1]]
-    if pos[0] == pos[1]:  # головна діагональ
-        if all(board[i][i] == state for i in range(3)):
-            return True
-    if pos[0] + pos[1] == 2:  # побічна діагональ
-        if all(board[i][2 - i] == state for i in range(3)):
-            return True
-    return False
+    def check_draw(self):
+        return all(self.board[i][j] != CellState.EMPTY for i in range(3) for j in range(3))
 
-def check_win(pos):
-    return is_row_winning(pos) or is_column_winning(pos) or is_diagonal_winning(pos)
+    def disable_buttons(self):
+        for row in self.buttons:
+            for btn in row: btn.config(state=tk.DISABLED)
 
-def is_draw(board):
-    return all(cell != CellState.EMPTY for row in board for cell in row)
-
-def clear_board(board):
-    for i in range(3):
-        for j in range(3):
-            board[i][j] = CellState.EMPTY
-
-def play_again():
-    clear_board(board)
-    answer = input("Do you want to play again? (y/n)")
-    if answer == "y":
-        return True
-    else:
-        return False
-
-def get_bot_move(bot_state, player_state):
-    for i in range(3):
-        for j in range(3):
-            if board[i][j].is_empty():
-                board[i][j] = bot_state
-                if check_win((i, j)):
-                    board[i][j] = CellState.EMPTY
-                    return (i, j)
-                board[i][j] = CellState.EMPTY
-
-    for i in range(3):
-        for j in range(3):
-            if board[i][j].is_empty():
-                board[i][j] = player_state
-                if check_win((i, j)):
-                    board[i][j] = CellState.EMPTY
-                    return (i, j)
-                board[i][j] = CellState.EMPTY
-
-    if board[1][1].is_empty():
-        return (1, 1)
-
-    corners = [(0,0), (2,0), (0,2), (2,2)]
-    random.shuffle(corners)
-    for i, j in corners:
-        if board[i][j].is_empty():
-            return (i, j)
-
-    available = [(i, j) for i in range(3) for j in range(3) if board[i][j].is_empty()]
-    return random.choice(available)
-
-def game_with_player(players, states, player):
-    while True:
-        print_board(board)
-        pos = input(players[player] + " move: ").strip().upper()
-        state = states[player]
-
-        if pos_is_correct(pos):
-            pos = make_normal_pos(pos)
-            add_el(pos, state)
-
-            if check_win(pos):
-                print_board(board)
-                print(players[player] + " wins!")
-                break
-
-            if is_draw(board):
-                print_board(board)
-                print("Draw!")
-                break
-
-            player = 1 - player
-
-        else:
-            print("Invalid move!")
-
-def game_with_bot(player_state, bot_state):
-    is_player_move = True
-    if player_state == CellState.O:
-        is_player_move = False
-
-    while True:
-
-        if is_player_move:
-            print_board(board)
-            pos = input("Make a move: ").strip().upper()
-
-            if pos_is_correct(pos):
-                pos = make_normal_pos(pos)
-                add_el(pos, player_state)
-                is_player_move = not is_player_move
-
-            else:
-                pos = make_normal_pos(pos)
-                print("Invalid move!")
-
-        else:
-            print_board(board)
-            print("Bot is thinking...")
-            sleep(3)
-            pos = get_bot_move(bot_state, player_state)
-            add_el(pos, bot_state)
-            is_player_move = not is_player_move
-
-        if check_win(pos) and is_player_move:
-            print_board(board)
-            print("Bot wins!")
-            break
-
-        if check_win(pos) and not is_player_move:
-            print_board(board)
-            print("Player wins!")
-            break
-
-        if is_draw(board):
-            print_board(board)
-            print("Draw!")
-            break
+    def restart_game(self):
+        self.is_game_over = False
+        self.board = [[CellState.EMPTY] * 3 for _ in range(3)]
+        self.current_player = CellState.X
+        self.status_label.config(text="Player X's turn")
+        for row in self.buttons:
+            for btn in row: btn.config(text="", state=tk.NORMAL)
 
 
-def main():
-    bot_enable = False
-    while True:
-        mode = int(input("Choose mode: 1 - PvP, 2 - PvBot "))
-        if mode == 1:
-            bot_enable = False
-            break
-        elif mode == 2:
-            bot_enable = True
-            break
-        else:
-            print("Invalid mode!")
-
-    if not bot_enable:
-        players = ["Player 1", "Player 2"]
-        states = [CellState.X, CellState.O]
-        while True:
-            clear_board(board)
-            player = 0
-
-            game_with_player(players, states, player)
-
-            if not play_again():
-                break
-    else:
-        while True:
-            clear_board(board)
-            player_state = input("Choose state: X or O ").strip().upper()
-
-            if player_state == "X":
-                player_state = CellState.X
-                bot_state = CellState.O
-                game_with_bot(player_state, bot_state)
-                if not play_again():
-                    break
-            elif player_state == "O":
-                player_state = CellState.O
-                bot_state = CellState.X
-                game_with_bot(player_state, bot_state)
-                if not play_again():
-                    break
-            else:
-                print("Invalid state!")
-
-
-
-main()
+# Запуск програми
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TicTacToeGUI(root)
+    root.mainloop()
