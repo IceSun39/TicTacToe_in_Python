@@ -20,8 +20,8 @@ class TicTacToeGUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Хрестики-нулики / Tic-Tac-Toe")
-        self.root.geometry("600x700")
-        self.root.minsize(500, 600)
+        self.root.geometry("400x500")
+        self.root.minsize(350, 450)
         self.root.resizable(True, True)
         
         # Ігрове поле 3x3 заповнене порожніми клітинками
@@ -39,8 +39,8 @@ class TicTacToeGUI:
     def setup_ui(self):
         # Заголовок
         title_label = tk.Label(self.root, text="Хрестики-нулики", 
-                              font=("Arial", 24, "bold"), bg="#2c3e50", fg="white", 
-                              pady=10)
+                              font=("Arial", 20, "bold"), bg="#2c3e50", fg="white", 
+                              pady=8)
         title_label.pack(fill=tk.X, pady=5)
         
         # Фрейм для вибору режиму
@@ -56,20 +56,20 @@ class TicTacToeGUI:
         
         self.pvp_btn = tk.Button(btn_frame, text="Гравець vs Гравець", 
                                command=self.start_pvp_game,
-                               bg="#3498db", fg="white", font=("Arial", 12),
-                               width=18, height=2)
-        self.pvp_btn.pack(side=tk.LEFT, padx=10)
+                               bg="#3498db", fg="white", font=("Arial", 10),
+                               width=15, height=2)
+        self.pvp_btn.pack(side=tk.LEFT, padx=5)
         
         self.bot_btn = tk.Button(btn_frame, text="Гравець vs Бот", 
                                command=self.start_bot_game,
-                               bg="#e74c3c", fg="white", font=("Arial", 12),
-                               width=18, height=2)
-        self.bot_btn.pack(side=tk.LEFT, padx=10)
+                               bg="#e74c3c", fg="white", font=("Arial", 10),
+                               width=15, height=2)
+        self.bot_btn.pack(side=tk.LEFT, padx=5)
         
         # Інформаційна панель
         self.info_label = tk.Label(self.root, text="Оберіть режим гри", 
-                                  font=("Arial", 14, "bold"), bg="#95a5a6", fg="white",
-                                  pady=8)
+                                  font=("Arial", 12, "bold"), bg="#95a5a6", fg="white",
+                                  pady=6)
         self.info_label.pack(fill=tk.X, pady=5)
         
         # Ігрове поле
@@ -81,12 +81,12 @@ class TicTacToeGUI:
             row = []
             for j in range(3):
                 btn = tk.Button(self.game_frame, text="", 
-                              font=("Arial", 28, "bold"),
-                              width=6, height=3,
+                              font=("Arial", 24, "bold"),
+                              width=4, height=2,
                               bg="#bdc3c7", fg="#2c3e50",
                               command=lambda r=i, c=j: self.on_cell_click(r, c),
                               state=tk.DISABLED)
-                btn.grid(row=i, column=j, padx=3, pady=3)
+                btn.grid(row=i, column=j, padx=2, pady=2)
                 row.append(btn)
             self.buttons.append(row)
         
@@ -98,18 +98,18 @@ class TicTacToeGUI:
         self.new_game_btn = tk.Button(control_frame, text="Нова гра", 
                                     command=self.new_game,
                                     bg="#27ae60", fg="white", 
-                                    font=("Arial", 13, "bold"),
-                                    width=15, height=2)
-        self.new_game_btn.pack(side=tk.LEFT, padx=8)
+                                    font=("Arial", 12, "bold"),
+                                    width=12, height=2)
+        self.new_game_btn.pack(side=tk.LEFT, padx=5)
         
         # Кнопка рестарт
         self.restart_btn = tk.Button(control_frame, text="Рестарт", 
                                    command=self.restart_game,
                                    bg="#f39c12", fg="white", 
-                                   font=("Arial", 13, "bold"),
-                                   width=15, height=2,
+                                   font=("Arial", 12, "bold"),
+                                   width=12, height=2,
                                    state=tk.DISABLED)
-        self.restart_btn.pack(side=tk.LEFT, padx=8)
+        self.restart_btn.pack(side=tk.LEFT, padx=5)
         
         # Кнопка виходу
         exit_btn = tk.Button(self.root, text="Вихід", 
