@@ -10,18 +10,6 @@ class CellState(Enum):
     O = "O"
 
 
-import tkinter as tk
-import random
-from enum import Enum
-
-
-# Стани клітинки гри
-class CellState(Enum):
-    EMPTY = " "
-    X = "X"
-    O = "O"
-
-
 # GUI для гри Тік-Так-Тое
 class TicTacToeGUI:
     def __init__(self, root):
