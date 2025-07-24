@@ -47,32 +47,31 @@ def make_normal_pos(pos):
 
 
 # Перевірка чи весь рядок однаковий
-def is_row_winning(pos):
-    state = board[pos[0]][pos[1]]
-    for i in range(3):
-        if state != board[pos[0]][i]:
-            return False
-    return True
+def is_row_winning(board, pos):
+    r, _ = pos
+    state = board[r][pos[1]]
+    # усі стовпці в рядку r повинні бути рівні state
+    return all(board[r][c] == state for c in range(3))
 
 
 # Перевірка чи весь стовпець однаковий
-def is_column_winning(pos):
-    state = board[pos[0]][pos[1]]
-    for i in range(3):
-        if state != board[i][pos[1]]:
-            return False
-    return True
+def is_column_winning(board, pos):
+    _, c = pos
+    state = board[pos[0]][c]
+    # усі рядки в стовпці c повинні бути рівні state
+    return all(board[r][c] == state for r in range(3))
 
 
 # Перевірка діагоналей (головної і побічної)
-def is_diagonal_winning(pos):
-    state = board[pos[0]][pos[1]]
-    if pos[0] == pos[1]:  # головна діагональ
-        if all(board[i][i] == state for i in range(3)):
-            return True
-    if pos[0] + pos[1] == 2:  # побічна діагональ
-        if all(board[i][2 - i] == state for i in range(3)):
-            return True
+def is_diagonal_winning(board, pos):
+    r, c = pos
+    state = board[r][c]
+    # головна діагональ
+    if r == c and all(board[i][i] == state for i in range(3)):
+        return True
+    # побічна діагональ
+    if r + c == 2 and all(board[i][2 - i] == state for i in range(3)):
+        return True
     return False
 
 
@@ -80,11 +79,12 @@ def is_diagonal_winning(pos):
 def check_win(pos):
     return is_row_winning(pos) or is_column_winning(pos) or is_diagonal_winning(pos)
 
-
 # Перевірка чи всі клітинки заповнені (нічия)
 def is_draw(board):
     return all(cell != CellState.EMPTY for row in board for cell in row)
 
+def evaluate():
+    pass
 
 # Очистити поле (встановити все як EMPTY)
 def clear_board(board):
