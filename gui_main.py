@@ -212,14 +212,17 @@ class TicTacToeGUI:
             else:
                 self.update_info("Хід бота...")
                 self.root.after(1500, self.make_bot_move)
-                
+
     def make_bot_move(self):
         if not self.game_active:
             return
-            
-        row, col = self.get_bot_move(self.board, self.bot_state, self.current_player)
-        self.make_move(row, col, self.bot_state)
-        
+
+        row, col = self.get_bot_move(self.board, self.bot_state, self.player_state)
+
+        # Перевірка на випадок, якщо хід не знайдено (наприклад, дошка повна)
+        if row is not None and col is not None:
+            self.make_move(row, col, self.bot_state)
+
     def update_info(self, text):
         self.info_label.config(text=text)
         
@@ -349,7 +352,9 @@ class TicTacToeGUI:
                 if board[i][j].is_empty():
                     new_board = [row[:] for row in board]
                     new_board[i][j] = bot_state
-                    score = self.minmax(new_board, 0, True, bot_state, player_state)
+
+                    score = self.minmax(new_board, 0, False, bot_state, player_state)
+
                     if score > best_score:
                         best_score = score
                         best_move = (i, j)
