@@ -1,9 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 from enum import Enum
-import random
-import threading
-import time
+import sys
 
 
 # Стан клітинки на полі
@@ -20,8 +18,8 @@ class TicTacToeGUI:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Хрестики-нулики / Tic-Tac-Toe")
-        self.root.geometry("400x500")
-        self.root.minsize(350, 450)
+        self.root.geometry("400x700")
+        self.root.minsize(350, 700)
         self.root.resizable(True, True)
         
         # Ігрове поле 3x3 заповнене порожніми клітинками
@@ -182,7 +180,7 @@ class TicTacToeGUI:
                                     state=tk.DISABLED)
         
         # Перевірити перемогу
-        if self.check_win((row, col)):
+        if self.check_win(self.board, state):
             if self.game_mode == "pvp":
                 winner = "Гравець X" if state == CellState.X else "Гравець O"
                 messagebox.showinfo("Перемога!", f"{winner} переміг!")
@@ -196,7 +194,7 @@ class TicTacToeGUI:
             return
             
         # Перевірити нічию
-        if self.is_draw():
+        if self.is_draw(self.board):
             messagebox.showinfo("Нічия", "Гра завершена внічию!")
             self.game_active = False
             self.disable_board()
@@ -219,7 +217,7 @@ class TicTacToeGUI:
         if not self.game_active:
             return
             
-        row, col = self.get_bot_move()
+        row, col = self.get_bot_move(self.board, self.bot_state, self.current_player)
         self.make_move(row, col, self.bot_state)
         
     def update_info(self, text):
@@ -266,73 +264,97 @@ class TicTacToeGUI:
             else:
                 self.update_info("Гра проти бота - Хід бота (X)")
                 self.root.after(1000, self.make_bot_move)
-        
-    # Логіка гри (з оригінального коду)
-    def check_win(self, pos):
-        return self.is_row_winning(pos) or self.is_column_winning(pos) or self.is_diagonal_winning(pos)
-        
-    def is_row_winning(self, pos):
-        state = self.board[pos[0]][pos[1]]
+
+    # Перевірка чи весь рядок однаковий
+    def is_row_winning(self, board, state):
         for i in range(3):
-            if state != self.board[pos[0]][i]:
-                return False
-        return True
-        
-    def is_column_winning(self, pos):
-        state = self.board[pos[0]][pos[1]]
-        for i in range(3):
-            if state != self.board[i][pos[1]]:
-                return False
-        return True
-        
-    def is_diagonal_winning(self, pos):
-        state = self.board[pos[0]][pos[1]]
-        if pos[0] == pos[1]:  # головна діагональ
-            if all(self.board[i][i] == state for i in range(3)):
-                return True
-        if pos[0] + pos[1] == 2:  # побічна діагональ
-            if all(self.board[i][2 - i] == state for i in range(3)):
+            if board[i][0] == state and board[i][1] == state and board[i][2] == state:
                 return True
         return False
-        
-    def is_draw(self):
-        return all(cell != CellState.EMPTY for row in self.board for cell in row)
-        
-    def get_bot_move(self):
-        # Спроба виграти
+
+    # Перевірка чи весь стовпець однаковий
+    def is_column_winning(self, board, state):
+        for i in range(3):
+            if board[0][i] == state and board[1][i] == state and board[2][i] == state:
+                return True
+        return False
+
+    # Перевірка діагоналей (головної і побічної)
+    def is_diagonal_winning(self, board, state):
+        # головна діагональ
+        if all(board[i][i] == state for i in range(3)):
+            return True
+        # побічна діагональ
+        if all(board[i][2 - i] == state for i in range(3)):
+            return True
+        return False
+
+    # Перевірка перемоги по будь-якому напрямку
+    def check_win(self, board, state):
+        return self.is_row_winning(board, state) or self.is_column_winning(board, state) or self.is_diagonal_winning(board, state)
+
+    # Перевірка чи всі клітинки заповнені (нічия)
+    def is_draw(self, board):
+        return all(cell != CellState.EMPTY for row in board for cell in row)
+
+    # Оцінка ходу для алгоритму minmax
+    def evaluate(self, board, bot_state):
+        # Визначаємо символ гравця
+        player_state = CellState.X if bot_state == CellState.O else CellState.O
+
+        # Перевіряємо перемоги
+        if self.check_win(board, bot_state):
+            return 1
+        elif self.check_win(board, player_state):
+            return -1
+        elif self.is_draw(board):
+            return 0
+
+        # Якщо гра не завершена
+        return None
+
+    # Логіка бота
+    def minmax(self, board, depth, is_maximising, bot_state, player_state):
+        res = self.evaluate(board, bot_state)
+        if res is not None:
+            return res
+
+        if is_maximising:
+            best_score = -sys.maxsize - 1
+            for i in range(3):
+                for j in range(3):
+                    if board[i][j].is_empty():
+                        new_board = [row[:] for row in board]
+                        new_board[i][j] = bot_state
+                        score = self.minmax(new_board, depth + 1, not is_maximising, bot_state, player_state)
+                        best_score = max(best_score, score)
+            return best_score
+        else:
+            best_score = sys.maxsize
+            for i in range(3):
+                for j in range(3):
+                    if board[i][j].is_empty():
+                        new_board = [row[:] for row in board]
+                        new_board[i][j] = player_state
+                        score = self.minmax(new_board, depth + 1, not is_maximising, bot_state, player_state)
+                        best_score = min(best_score, score)
+            return best_score
+
+    def get_bot_move(self, board, bot_state, player_state):
+        best_score = -sys.maxsize
+        best_move = None
+
         for i in range(3):
             for j in range(3):
-                if self.board[i][j].is_empty():
-                    self.board[i][j] = self.bot_state
-                    if self.check_win((i, j)):
-                        self.board[i][j] = CellState.EMPTY
-                        return (i, j)
-                    self.board[i][j] = CellState.EMPTY
+                if board[i][j].is_empty():
+                    new_board = [row[:] for row in board]
+                    new_board[i][j] = bot_state
+                    score = self.minmax(new_board, 0, True, bot_state, player_state)
+                    if score > best_score:
+                        best_score = score
+                        best_move = (i, j)
 
-        # Спроба заблокувати
-        for i in range(3):
-            for j in range(3):
-                if self.board[i][j].is_empty():
-                    self.board[i][j] = self.player_state
-                    if self.check_win((i, j)):
-                        self.board[i][j] = CellState.EMPTY
-                        return (i, j)
-                    self.board[i][j] = CellState.EMPTY
-
-        # Центр
-        if self.board[1][1].is_empty():
-            return (1, 1)
-
-        # Кути
-        corners = [(0, 0), (2, 0), (0, 2), (2, 2)]
-        random.shuffle(corners)
-        for i, j in corners:
-            if self.board[i][j].is_empty():
-                return (i, j)
-
-        # Будь-яка вільна
-        available = [(i, j) for i in range(3) for j in range(3) if self.board[i][j].is_empty()]
-        return random.choice(available)
+        return best_move
         
     def run(self):
         self.root.mainloop()
